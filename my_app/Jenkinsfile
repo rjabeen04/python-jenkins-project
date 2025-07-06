@@ -4,25 +4,35 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/your-username/your-python-repo.git'
+                // Checkout your GitHub repo
+                git 'https://github.com/rjabeen04/python-jenkins-project.git'
             }
         }
 
-        stage('Install dependencies') {
+        stage('Setup Python Environment') {
             steps {
-                sh 'python3 -m venv venv'
-                sh '. venv/bin/activate && pip install -r requirements.txt'
+                // Create and activate virtual environment, install dependencies
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install -r requirements.txt
+                '''
             }
         }
 
-        stage('Run Tests') {
+        stage('Run Tests with Coverage') {
             steps {
-                sh '. venv/bin/activate && pytest --cov=my_app tests/'
+                // Run pytest with coverage, output coverage report in XML format
+                sh '''
+                . venv/bin/activate
+                pytest --cov=my_app --cov-report=xml --junitxml=test-results.xml
+                '''
             }
         }
 
-        stage('Publish Coverage') {
+        stage('Publish Coverage Report') {
             steps {
+                // Publish Cobertura coverage report from coverage.xml
                 cobertura coberturaReportFile: 'coverage.xml'
             }
         }
@@ -30,7 +40,8 @@ pipeline {
 
     post {
         always {
-            junit 'test-results.xml'  // if you generate junit reports
+            // Publish JUnit test results and clean workspace after run
+            junit 'test-results.xml'
             cleanWs()
         }
     }

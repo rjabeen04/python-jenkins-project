@@ -5,7 +5,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout your GitHub repo
-                git 'https://github.com/rjabeen04/python-jenkins-project.git'
+                git branch: 'main', url: 'https://github.com/rjabeen04/python-jenkins-project.git'
+
             }
         }
 

@@ -5,8 +5,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout your GitHub repo
-                git branch: 'main', url: 'https://github.com/rjabeen04/python-jenkins-project.git'
-
+                git 'https://github.com/rjabeen04/python-jenkins-project.git'
             }
         }
 
@@ -17,6 +16,16 @@ pipeline {
                 python3 -m venv venv
                 . venv/bin/activate
                 pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                // Run flake8 linter on my_app folder
+                sh '''
+                . venv/bin/activate
+                flake8 my_app
                 '''
             }
         }

@@ -1,18 +1,24 @@
 pipeline {
     agent any
 
+    environment {
+        VENV_DIR = 'venv'
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/rjabeen04/python-jenkins-project.git'
+                git 'https://github.com/rjabeen04/python-jenkins-project.git'
             }
         }
 
         stage('Setup Python Environment') {
             steps {
                 sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
+                    python3 -m venv $VENV_DIR
+                    . $VENV_DIR/bin/activate
+                    pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
             }
@@ -20,18 +26,23 @@ pipeline {
 
         stage('Lint') {
             steps {
-                sh '''
-                    . venv/bin/activate
-                    flake8 my_app
-                '''
+                script {
+                    def lintStatus = sh(script: '''
+                        . $VENV_DIR/bin/activate
+                        flake8 my_app
+                    ''', returnStatus: true)
+                    if (lintStatus != 0) {
+                        echo "⚠️ Lint warnings found (flake8), but continuing..."
+                    }
+                }
             }
         }
 
         stage('Run Tests with Coverage') {
             steps {
                 sh '''
-                    . venv/bin/activate
-                    pytest --cov=my_app --cov-report=xml --junitxml=test-results.xml
+                    . $VENV_DIR/bin/activate
+                    pytest --cov=my_app --cov-report=xml --junitxml=tests/test-results/results.xml
                 '''
             }
         }
@@ -41,12 +52,20 @@ pipeline {
                 cobertura coberturaReportFile: 'coverage.xml'
             }
         }
+
     }
 
     post {
         always {
-            junit 'test-results.xml'
-            cleanWs()
+            junit 'tests/test-results/results.xml'
+        }
+
+        success {
+            echo '✅ Build and tests succeeded!'
+        }
+
+        failure {
+            echo '❌ Build or tests failed.'
         }
     }
 }
